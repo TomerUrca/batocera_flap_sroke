@@ -1,0 +1,67 @@
+%% Wing velocities and angle of attak parameters
+%%insert A is the matrix of digitation for the flying beetle where A(:,1:3)
+%%are the ponts representing the right wing tip and A(:,13:15) are mid
+%%trailing edge.
+%outputs: [wing velocity of chord, velocity at tip, angle of attack, 
+%velocity of angle of attack, acceleration of angle of attack]
+
+function[wing_vel, tip_vel,aoa,aoa_vel,aoa_acc] = wing_vel_aoa(A,V)
+%%% angle of attack & velocities/acceleration of angle of attack and
+
+chord(:,1:3) = 0.56.*A(:,1:3)-A(:,13:15); %wing chord positioned to flight direction 
+new_chord(:,1:2) = [chord(:,1),chord(:,3)]; %X,Z coordinates of chord
+
+wing_velocity = velocity(A(:,1:3)*0.56,2000); %matrix of X,Y,Z velocities of mid wing section positioned to flight direction
+wing_velocity(:,1) = wing_velocity(:,1)-V; %add wind velocity to Vx value
+new_wing_velocity(:,1:2) = [wing_velocity(:,1),wing_velocity(:,3)]; %X,Z coordinates of wingXwind velocity
+
+wing_tip_vel = velocity(A(:,1:3),2000); %matrix of X,Y,Z velocities of wing tip positioned to flight direction
+wing_tip_vel(:,1) = wing_tip_vel(:,1)-V; %add wind velocity to Vx value
+
+%wing velocity at chord point
+for i = 1:length(wing_velocity)
+Vf(i,1) = sqrt(wing_velocity(i,1).^2 + wing_velocity(i,3).^2 );
+end
+
+%find angle between wingXwind velocity vector and wing chord vector via
+%acos product
+for j = 1:length(A)-1
+fixed_attack_angles(j) = acos(dot(new_wing_velocity(j,1:2),new_chord(j,1:2))/(norm(new_chord(j,1:2))*norm(new_wing_velocity(j,1:2))))';
+end
+
+%find angle between wingXwind velocity vector and wing chord vector via
+%atan products and trigonometry
+
+% for j = 1:length(A)-1
+% all_attack_angles(j) =atan2(wing_velocity(j,3),wing_velocity(j,1))...
+%     -atan2(chord(j,3),chord(j,1)); %angle between wing velocity [Vx-Vw,Vz] and Chord [Chx,Chz]
+% end
+% 
+% %fix asimptotes
+% 
+% for i=1:length(all_attack_angles)-1
+%     if all_attack_angles(i)>200
+%         fixed_attack_angles(i)=all_attack_angles(i)-360;
+%     else if all_attack_angles(i)<-200
+%         fixed_attack_angles(i)=360 + all_attack_angles(i);
+%         else
+%             fixed_attack_angles(i)=all_attack_angles(i);
+%         end
+%     end
+% end
+
+%velocity and acceleration of angle of attack
+
+vel_aoa_mat(:,1) = fixed_attack_angles';
+vel_aoa_mat(:,2:3) = zeros();
+aoa_velocity = velocity(deg2rad(vel_aoa_mat),2000);
+aoa_acceleration = velocity(deg2rad(aoa_velocity),2000);
+
+%%output
+
+aoa = (fixed_attack_angles)'; %angles of attack vector
+wing_vel(:,1) = sqrt(wing_velocity(:,1).^2+wing_velocity(:,3).^2); %XZ vector size of wing velocity
+tip_vel(:,1) = sqrt(wing_tip_vel(:,1).^2+wing_tip_vel(:,3).^2);  %XZ vector size of wing tip velocity
+aoa_vel(:,1) = aoa_velocity(:,1); %angle of attack velocity
+aoa_acc = aoa_acceleration(:,1);  %angle of attack acceleration
+end
