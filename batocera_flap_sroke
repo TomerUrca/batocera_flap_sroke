@@ -1,0 +1,43 @@
+%% Flapping angle parameters
+%%insert A is the matrix of digitation for the flying beetle where A(:,1:3)
+%%are the ponts representing the right wing tip.
+%outputs: [stroke plane angle, flapping angle, instantanious flapping
+%angle, velocity of flapping angle, acceleration of flapping angle]
+
+function [stroke_plane, flap_angle, inst_flap_angle, flap_vel, flap_acc] = batocera_flap_sroke(A)
+
+[r,c] = size(A);
+
+StrPlane = [A(:,1), A(:,3)]; %stroke plane relative to X
+Beta(:,1)= atan(regress(StrPlane(:,2),StrPlane(:,1))); % stroke plane angle relative to X
+
+T1= [cos(Beta(1,1)) 0 sin(Beta(1,1)) %trasformation matrix to stroke plane
+    0 1 0
+-sin(Beta(1,1)) 0 cos(Beta(1,1))];
+
+for j=1:r
+   
+for i=1:3:21    
+C(j,i:i+2) = (T1*A(j,i:i+2)')';  %original matrix trasformation to stroke plane
+end
+end
+
+Amp(:,1) = atan2(C(:,1), C(:,2)); %Amplitude relative to stroke plane
+
+AmpInv = max(Amp) - Amp; %inverted amplitude
+[RangeAmp,rangeIdx] = findpeaks(AmpInv,'MinPeakDistance',40); %find peaks after inversion,RangeAmp = peak value
+RangeAmp=mean(RangeAmp);
+
+%%velocity and acceleration of flapping angle
+vel_flap_mat(:,1) = Amp;
+vel_flap_mat(:,2:3) = zeros();
+flap_vel1 = velocity(vel_flap_mat,2000);
+flap_acceleration = velocity(flap_vel1,2000);
+
+%%outputs
+stroke_plane = Beta;
+flap_vel(:,1) = flap_vel1(:,1);
+flap_angle = RangeAmp;
+inst_flap_angle = Amp;
+flap_acc(:,1) = flap_acceleration(:,1);
+end
